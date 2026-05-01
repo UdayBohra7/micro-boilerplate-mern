@@ -11,6 +11,7 @@ const validate = (schema) => (req, res, next) => {
     .validate(object);
 
   if (error) {
+    console.log('Validation error:', error.message);
     const errorMessage = error.details.map((details) => details.message).join(', ');
     return next(new ApiError(400, errorMessage));
   }
