@@ -1,27 +1,27 @@
 const jwt = require('jsonwebtoken');
-const { config } = require('dotenv');
+const httpStatus = require('http-status').status;
 const { User } = require('../models/user.model');
-
-config();
+const ApiError = require('../utils/ApiError');
 
 const auth = () => async (req, res, next) => {
   const { headers } = req;
-  const accessToken = headers.authorization ? headers.authorization.split(' ')[1] : null; // if token not send it gives split of undef error
+  const accessToken = headers.authorization ? headers.authorization.split(' ')[1] : null;
   if (accessToken === null) {
-    return res.status(400).json({ status: 400, message: 'Bearer Token is required.' });
+    return next(new ApiError(httpStatus.BAD_REQUEST, 'Bearer Token is required.'));
   }
   try {
     const decoded = jwt.verify(accessToken, process.env.JWT_SECRET);
-    req.user = decoded?.sub;
-    const user = await User.findOne({ _id: req.user });
-    req.userObj = user;
+    const user = await User.findOne({ _id: decoded.sub });
+    if (!user) {
+      return next(new ApiError(httpStatus.NOT_FOUND, 'User not found'));
+    }
     req.user = user;
     return next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
-      return res.status(401).json({ msg: 'Token has expired.' });
+      return next(new ApiError(httpStatus.UNAUTHORIZED, 'Token has expired.'));
     }
-    return res.status(401).json({ msg: err.message });
+    return next(new ApiError(httpStatus.UNAUTHORIZED, err.message));
   }
 };
 

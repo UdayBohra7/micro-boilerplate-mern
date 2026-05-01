@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
-const { toJSON, paginate } = require('./plugins');
-const { roles } = require('../config/roles');
+const bcrypt = require('bcryptjs');
 
 const userSchema = mongoose.Schema(
   {
@@ -14,33 +13,37 @@ const userSchema = mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 8,
+      private: true, // used by the toJSON plugin
     },
     phone: {
       type: String,
     },
-  }, { timestamps: true }
-);
-
-
-userSchema.statics.isEmailTaken = async function (email, excludeUserId) {
-  if (!email) {
-    return false;
+  },
+  {
+    timestamps: true,
   }
-  const user = await this.findOne({
-    email: { $ne: null, $ne: '' },
-    email,
-    _id: { $ne: excludeUserId },
-  });
-  return !!user;
-};
-
+);
 
 userSchema.methods.isPasswordMatch = async function (password) {
   const user = this;
   return bcrypt.compare(password, user.password);
 };
 
+userSchema.pre('save', async function (next) {
+  const user = this;
+  if (user.isModified('password')) {
+    user.password = await bcrypt.hash(user.password, 8);
+  }
+  next();
+});
 
-const User = mongoose.model('User', userSchema); 
+const User = mongoose.model('User', userSchema);
 
 module.exports = { User };
