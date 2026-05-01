@@ -1,6 +1,5 @@
 const express = require('express');
 const cors = require('cors');
-const httpStatus = require('http-status').status;
 const config = require('./config/config');
 const routes = require('./routes/v1');
 const app = express();

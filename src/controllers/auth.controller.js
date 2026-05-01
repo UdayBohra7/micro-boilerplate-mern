@@ -1,4 +1,3 @@
-const httpStatus = require('http-status').status;
 const catchAsync = require('../utils/catchAsync');
 const { authService, userService, tokenService } = require('../services');
 const { User } = require('../models/user.model');
@@ -6,7 +5,7 @@ const { User } = require('../models/user.model');
 const register = catchAsync(async (req, res) => {
   const user = await userService.createUser(req.body);
   const tokens = await tokenService.generateAuthTokens(user);
-  res.status(httpStatus.CREATED).send({ user, tokens });
+  res.status(201).send({ user, tokens });
 });
 
 const login = catchAsync(async (req, res) => {
